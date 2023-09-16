@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" class="container">
+  <head>
+    <title></title>
+    <meta charset="UTF-8" />
+    <script src="https://unpkg.com/htmx.org@1.9.5"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="css/style.css" rel="stylesheet" />
+    <style>
+      .parent {
+        display: grid;
+        grid-gap: 10px;
+        grid-template-columns: repeat(3, 2em);
+        grid-template-rows: repeat(3, 2em);
+      }
+      .parent > div {
+        padding: 1em;
+        background-color: #ccc;
+        width: 1em;
+        height: 1em;
+      }
+      .error-message {
+        color: red;
+      }
+      .error input {
+        box-shadow: 0 0 3px #cc0000;
+      }
+      .valid input {
+        box-shadow: 0 0 3px #36cc00;
+      }
+      .fade-me-out.htmx-swapping {
+        /* opacity: 0;
+        transition: opacity 1s ease-out; */
+        position: relative;
+        transition: top 6s ease 6s;
+        top: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="ws" hx-ws="connect:/ws" hx-trigger="task">
+    <!-- <div id="ws" hx-ws="connect:ws://localhost:8080/ws" hx-trigger="load" hx-swap-oob="beforeend"> -->
+      <form
+        id="myForm"
+        hx-ws="send:submit"
+        hx-target="#ws"
+      >
+        <input type="text" name="task" required />
+        <button type="submit">save ws</button>
+      </form>
+    </div>
+    <div id="todo-list" hx-get="/taskList" hx-trigger="load"></div>
+    <form
+      id="myForm"
+      hx-post="/save"
+      hx-trigger="submit"
+      hx-target="#todo-list"
+      hx-swap="beforeend"
+    >
+      <input type="text" name="task" required />
+      <button type="submit">save</button>
+    </form>
+  </body>
+</html>
