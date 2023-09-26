@@ -1,0 +1,49 @@
+html,
+body {
+    padding: 0;
+    margin: 0;
+    background-color: green;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    background-color: red;
+}
+
+.search {
+    width: 100%;
+    background-color: brown;
+}
+
+form {
+    width: 100%;
+}
+
+input {
+    border: none;
+    width: 100%;
+    border-radius: 0.3rem;
+}
+
+input[type="submit"] {
+    background-color: rgb(27, 116, 223);
+    color: white;
+    font-size: large;
+    font-weight: bold;
+}
+
+button {
+    border: none;
+    width: 100%;
+    border-radius: 0.3rem;
+    background-color: rgb(27, 116, 223);
+    color: white;
+}
+.red {
+    color: rgb(38, 0, 255);
+    transition: all ease-in 900ms;
+}

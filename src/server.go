@@ -21,6 +21,11 @@ func getRoot(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "./static/index.html")
 	// http.FileServer(http.Dir("../static/index1.html"))
 }
+func getCSS(w http.ResponseWriter, r *http.Request) {
+	// fmt.Printf("got / request\n")
+	http.ServeFile(w, r, "./static/style.css")
+	// http.FileServer(http.Dir("../static/index1.html"))
+}
 func getHello(w http.ResponseWriter, r *http.Request) {
 	// fmt.Printf("got /hello request\n")
 	io.WriteString(w, "Hello, HTTP!\n")
@@ -254,7 +259,7 @@ func (s *Server) readLoop(ws *websocket.Conn) {
 		// broadcast(data.Task)
 		// tastList := "<div hx-boost=\"true\"> <a href=\"/task\">" + data.Task + " </a></div>"
 		lineNum++
-		tastList := "<div hx-swap-oob=\"beforeend:#todo-list\" hx-boost=\"true\"> <a href=\"/task/" + strconv.Itoa(lineNum) + "\">" + data.Task + "</a></div>"
+		tastList := "<div hx-swap-oob=\"beforeend:#todo-list\"><div hx-boost=\"true\"> <a href=\"/task/" + strconv.Itoa(lineNum) + "\">" + data.Task + "</a></div></div>"
 		s.broadcast(tastList)
 		// err = websocket.Message.Send(ws, data.Task)
 		// if err != nil {
@@ -319,6 +324,7 @@ func main() {
 	server := NewServer()
 
 	http.HandleFunc("/", CORS(getRoot))
+	http.HandleFunc("/style.css", CORS(getCSS))
 	http.HandleFunc("/taskList", CORS(listTask))
 	http.HandleFunc("/hello", CORS(getHello))
 	http.HandleFunc("/save", CORS(gets))

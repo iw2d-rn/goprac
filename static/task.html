@@ -5,16 +5,23 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <script src="https://unpkg.com/htmx.org@1.9.5"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="http://localhost:3333/style.css"
+      rel="stylesheet"
+      type="text/css"
+    />
     <title>Document</title>
-    <style>
-    </style>
   </head>
-  <body class="child" style="background-color: rgb(222, 46, 46)">
-    <div
-      id="todo-list"
-      hx-get="/ids"
-      hx-trigger="load"
-      hx-target="#todo-list"
-    ></div>
+  <body>
+    <div id="app" class="red">
+      <div
+        id="todo-list"
+        hx-get="/ids"
+        hx-trigger="load"
+        hx-target="#todo-list"
+      ></div>
+      <div>edit</div>
+      <div>delete</div>
+    </div>
   </body>
 </html>
