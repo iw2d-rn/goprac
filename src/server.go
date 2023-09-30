@@ -466,7 +466,7 @@ func (s *Server) broadcast(text string) {
 // }
 
 func ani(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, `<div id="list" class="fadein">server res</div>`)
+	io.WriteString(w, `<div id="list" class="fadein">ssss</div>`)
 }
 
 func main() {

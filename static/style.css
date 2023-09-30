@@ -2,7 +2,7 @@ html,
 body {
     padding: 0;
     margin: 0;
-    background-color: green;
+    /* background-color: green; */
 }
 
 .container {
@@ -48,23 +48,11 @@ button {
     transition: all ease-in 900ms;
 }
 
-.fadein{
-    color: rgb(0, 255, 76);
-    transition: all ease-in 5s;
-}
-
-.htmx-request.new-element {
+#list.htmx-added {
     opacity: 0;
-font-size: larger;
-    transition: opacity 5s ease;
-    /* CSS transition property */
 }
 
-.htmx-request.new-element.show {
+#list {
     opacity: 1;
-}
-
-.htmx-request div.htmx-swapping div {
-    opacity: 0;
     transition: opacity 1s ease-out;
 }
