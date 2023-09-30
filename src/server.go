@@ -54,7 +54,7 @@ func removeTask(w http.ResponseWriter, r *http.Request) {
 	decodedValue, err := url.QueryUnescape(asciiString)
 	t := strings.Replace(decodedValue, "task=", "", -1)
 	// fmt.Println(t)
-	deleteLineFromFile("database.txt",t)
+	deleteLineFromFile("database.txt", t)
 }
 
 func deletea(task string) {
@@ -180,11 +180,11 @@ func gets(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(r.FormValue("task"))
 
 	lineNum++
-	tastList := "<div hx-boost=\"true\"> <a href=\"/task/" + strconv.Itoa(
+	tastList := `<div hx-boost="true" class="new-element"> <a href="task"` + strconv.Itoa(
 		lineNum,
-	) + "\">" + r.FormValue(
+	) + `\>` + r.FormValue(
 		"task",
-	) + " </a></div>"
+	) + `</a></div>`
 	io.WriteString(w, tastList)
 }
 
@@ -214,7 +214,7 @@ func getTODO() string {
 		lineNum1++
 		lineNum = lineNum1
 		// fmt.Println(fileScanner.Text())
-		task += "<div hx-boost=\"true\"> <a href=\"/task/" + strconv.Itoa(
+		task += "<div hx-boost=\"true\" class=\"new-element\"> <a href=\"/task/" + strconv.Itoa(
 			lineNum1,
 		) + "\">" + fileScanner.Text() + "</a></div>"
 	}
@@ -465,6 +465,10 @@ func (s *Server) broadcast(text string) {
 //     }
 // }
 
+func ani(w http.ResponseWriter, r *http.Request) {
+	io.WriteString(w, `<div id="list" class="fadein">server res</div>`)
+}
+
 func main() {
 	server := NewServer()
 	// conn()
@@ -478,6 +482,7 @@ func main() {
 	http.HandleFunc("/task/", CORS(getTaskPage))
 	http.HandleFunc("/id/", CORS(getTaskById))
 	http.HandleFunc("/ids", CORS(setid))
+	http.HandleFunc("/ani", CORS(ani))
 
 	http.Handle("/ws", websocket.Handler(server.websocketHandler))
 	http.ListenAndServe(":3333", nil)

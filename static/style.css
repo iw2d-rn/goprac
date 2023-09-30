@@ -47,3 +47,24 @@ button {
     color: rgb(38, 0, 255);
     transition: all ease-in 900ms;
 }
+
+.fadein{
+    color: rgb(0, 255, 76);
+    transition: all ease-in 5s;
+}
+
+.htmx-request.new-element {
+    opacity: 0;
+font-size: larger;
+    transition: opacity 5s ease;
+    /* CSS transition property */
+}
+
+.htmx-request.new-element.show {
+    opacity: 1;
+}
+
+.htmx-request div.htmx-swapping div {
+    opacity: 0;
+    transition: opacity 1s ease-out;
+}
