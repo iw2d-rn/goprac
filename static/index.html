@@ -35,6 +35,16 @@
           <input type="text" name="task" required />
           <input type="submit" value="save ws" />
         </form>
+        <form
+          id="myForm2"
+          hx-delete="/delete"
+          hx-trigger="submit"
+          hx-target="#todo-list"
+          hx-swap="beforeend"
+        >
+          <input type="text" name="task" required />
+          <input type="submit" value="delete" />
+        </form>
       </div>
     </div>
   </body>

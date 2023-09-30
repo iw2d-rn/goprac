@@ -2,10 +2,17 @@ package main
 
 import (
 	"bufio"
+	// "time"
+
+	// "encoding/hex"
+	// "encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
+
+	// "io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -26,28 +33,163 @@ func getCSS(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "./static/style.css")
 	// http.FileServer(http.Dir("../static/index1.html"))
 }
-func getHello(w http.ResponseWriter, r *http.Request) {
+
+func getHello(w http.ResponseWriter, _ *http.Request) {
 	// fmt.Printf("got /hello request\n")
 	io.WriteString(w, "Hello, HTTP!\n")
 }
 
-func listTask(w http.ResponseWriter, r *http.Request) {
+func listTask(w http.ResponseWriter, _ *http.Request) {
 	tastList := getTODO()
 	io.WriteString(w, tastList)
+}
+
+func removeTask(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Error reading request body", http.StatusInternalServerError)
+		return
+	}
+	asciiString := string(body)
+	decodedValue, err := url.QueryUnescape(asciiString)
+	t := strings.Replace(decodedValue, "task=", "", -1)
+	// fmt.Println(t)
+	deleteLineFromFile("database.txt",t)
+}
+
+func deletea(task string) {
+	f, err := os.Open("database.txt")
+
+	// fmt.Println(task)
+
+	if err != nil {
+		// return 0, err
+		fmt.Println("Error :", err)
+	}
+	defer f.Close()
+
+	tmpFile, err := os.Open("tempfile")
+	if err != nil {
+		fmt.Println("Error :", err)
+	}
+	defer tmpFile.Close()
+
+	// Splits on newlines by default.
+	scanner := bufio.NewScanner(f)
+
+	lineNo := 1
+
+	scanner.Split(bufio.ScanLines)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		// fmt.Println(scanner.Text())
+		if strings.Contains(line, task) {
+			fmt.Println("found on line", lineNo, line)
+			continue
+		}
+		lineNo++
+	}
+
+	f.Close()
+
+	// Remove the original file
+	err = os.Remove("tempfile")
+	if err != nil {
+		fmt.Println("Error :", err)
+
+	}
+
+	// Rename the temporary file to the original file name
+	err = os.Rename("tempfile", "database.txt")
+	if err != nil {
+		fmt.Println("Error :", err)
+
+	}
+
+	// readFile, err := os.Open("database.txt")
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	// fileScanner := bufio.NewScanner(readFile)
+
+	// fileScanner.Split(bufio.ScanLines)
+	// lineNum1 := 0
+	// for fileScanner.Scan() {
+	// 	task += fileScanner.Text()
+	// }
+	// readFile.Close()
+
+}
+
+func deleteLineFromFile(filePath string, lineToDelete string) error {
+	// Open the file for reading and writing
+	file, err := os.OpenFile(filePath, os.O_RDWR, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Create a temporary file to store the modified content
+	tempFilePath := filePath + ".temp"
+	tempFile, err := os.Create(tempFilePath)
+	if err != nil {
+		return err
+	}
+	defer tempFile.Close()
+
+	// Create a scanner to read the original file
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Check if the line matches the line to be deleted
+		if strings.TrimSpace(line) == lineToDelete {
+			continue // Skip this line
+		}
+
+		// Write the line to the temporary file
+		fmt.Fprintln(tempFile, line)
+	}
+
+	// Check for scanner errors
+	if err := scanner.Err(); err != nil {
+		return err
+	}
+
+	// Close the original file
+	file.Close()
+
+	// Remove the original file
+	if err := os.Remove(filePath); err != nil {
+		return err
+	}
+
+	// Rename the temporary file to the original file name
+	if err := os.Rename(tempFilePath, filePath); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func gets(w http.ResponseWriter, r *http.Request) {
 	// fmt.Printf("got /save request\n")
 	r.ParseForm()
 	storeTODO(r.FormValue("task"))
+	fmt.Println(r.FormValue("task"))
+
 	lineNum++
-	tastList := "<div hx-boost=\"true\"> <a href=\"/task/" + strconv.Itoa(lineNum) + "\">" + r.FormValue("task") + " </a></div>"
+	tastList := "<div hx-boost=\"true\"> <a href=\"/task/" + strconv.Itoa(
+		lineNum,
+	) + "\">" + r.FormValue(
+		"task",
+	) + " </a></div>"
 	io.WriteString(w, tastList)
 }
 
 func storeTODO(task string) {
 	readFile, err := os.OpenFile("database.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, os.ModePerm)
-
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -59,7 +201,6 @@ func storeTODO(task string) {
 }
 
 func getTODO() string {
-
 	readFile, err := os.Open("database.txt")
 	task := ""
 	if err != nil {
@@ -73,7 +214,9 @@ func getTODO() string {
 		lineNum1++
 		lineNum = lineNum1
 		// fmt.Println(fileScanner.Text())
-		task += "<div hx-boost=\"true\"> <a href=\"/task/" + strconv.Itoa(lineNum1) + "\">" + fileScanner.Text() + "</a></div>"
+		task += "<div hx-boost=\"true\"> <a href=\"/task/" + strconv.Itoa(
+			lineNum1,
+		) + "\">" + fileScanner.Text() + "</a></div>"
 	}
 	// fmt.Println("New string 2: ", task)
 	readFile.Close()
@@ -161,7 +304,8 @@ func CORS(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Access-Control-Allow-Origin", "*")
 		w.Header().Add("Access-Control-Allow-Credentials", "true")
-		w.Header().Add("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		w.Header().
+			Add("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
 		w.Header().Add("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
 
 		if r.Method == "OPTIONS" {
@@ -259,7 +403,9 @@ func (s *Server) readLoop(ws *websocket.Conn) {
 		// broadcast(data.Task)
 		// tastList := "<div hx-boost=\"true\"> <a href=\"/task\">" + data.Task + " </a></div>"
 		lineNum++
-		tastList := "<div hx-swap-oob=\"beforeend:#todo-list\"><div hx-boost=\"true\"> <a href=\"/task/" + strconv.Itoa(lineNum) + "\">" + data.Task + "</a></div></div>"
+		tastList := "<div hx-swap-oob=\"beforeend:#todo-list\"><div hx-boost=\"true\"> <a href=\"/task/" + strconv.Itoa(
+			lineNum,
+		) + "\">" + data.Task + "</a></div></div>"
 		s.broadcast(tastList)
 		// err = websocket.Message.Send(ws, data.Task)
 		// if err != nil {
@@ -320,20 +466,19 @@ func (s *Server) broadcast(text string) {
 // }
 
 func main() {
-
 	server := NewServer()
+	// conn()
 
 	http.HandleFunc("/", CORS(getRoot))
 	http.HandleFunc("/style.css", CORS(getCSS))
 	http.HandleFunc("/taskList", CORS(listTask))
 	http.HandleFunc("/hello", CORS(getHello))
 	http.HandleFunc("/save", CORS(gets))
+	http.HandleFunc("/delete", (removeTask))
 	http.HandleFunc("/task/", CORS(getTaskPage))
 	http.HandleFunc("/id/", CORS(getTaskById))
 	http.HandleFunc("/ids", CORS(setid))
 
 	http.Handle("/ws", websocket.Handler(server.websocketHandler))
-
 	http.ListenAndServe(":3333", nil)
-
 }
