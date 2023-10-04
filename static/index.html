@@ -60,13 +60,9 @@
         color: rgb(38, 0, 255);
         transition: all ease-in 900ms;
       }
-
-      #list.htmx-added {
+      .htmx-swapping {
+        color: green;
         opacity: 0;
-      }
-
-      #list {
-        opacity: 1;
         transition: opacity 1s ease-out;
       }
     </style>
@@ -75,13 +71,12 @@
     <div id="app" class="container">
       <div class="search">search</div>
       <div id="todo-list" hx-get="/taskList" hx-trigger="load"></div>
-      <div id="list" hx-post="/ani" hx-swap="outerHTML settle:1s">zzz</div>
       <form
         id="myForm"
         hx-post="/save"
         hx-trigger="submit"
         hx-target="#todo-list"
-        hx-swap="beforeend"
+        hx-swap="beforeend htmx-swapping"
       >
         <input type="text" name="task" required />
         <input type="submit" value="save" />

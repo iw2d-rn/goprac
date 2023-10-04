@@ -14,14 +14,13 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"strconv"
 	"strings"
 	"sync"
 
 	"golang.org/x/net/websocket"
 )
 
-var lineNum int = 0
+var taskName string = ""
 
 func getRoot(w http.ResponseWriter, r *http.Request) {
 	// fmt.Printf("got / request\n")
@@ -55,6 +54,8 @@ func removeTask(w http.ResponseWriter, r *http.Request) {
 	t := strings.Replace(decodedValue, "task=", "", -1)
 	// fmt.Println(t)
 	deleteLineFromFile("database.txt", t)
+
+	io.WriteString(w, "")
 }
 
 func deletea(task string) {
@@ -122,7 +123,7 @@ func deletea(task string) {
 
 }
 
-func deleteLineFromFile(filePath string, lineToDelete string) error {
+func deleteLineFromFile(filePath string, taskName1 string) error {
 	// Open the file for reading and writing
 	file, err := os.OpenFile(filePath, os.O_RDWR, 0644)
 	if err != nil {
@@ -144,7 +145,7 @@ func deleteLineFromFile(filePath string, lineToDelete string) error {
 		line := scanner.Text()
 
 		// Check if the line matches the line to be deleted
-		if strings.TrimSpace(line) == lineToDelete {
+		if strings.TrimSpace(line) == taskName1 {
 			continue // Skip this line
 		}
 
@@ -179,12 +180,16 @@ func gets(w http.ResponseWriter, r *http.Request) {
 	storeTODO(r.FormValue("task"))
 	fmt.Println(r.FormValue("task"))
 
-	lineNum++
-	tastList := `<div hx-boost="true" class="new-element"> <a href="task"` + strconv.Itoa(
-		lineNum,
-	) + `\>` + r.FormValue(
+	tastList := `<div hx-boost="true" class="new-element"> <a href="/task/` + r.FormValue("text") + `">` + r.FormValue(
 		"task",
-	) + `</a></div>`
+	) + `</a>
+		<form hx-trigger="click" hx-delete="/delete" hx-target="closest .new-element"
+	hx-swap="outerHTML swap:1s"	
+		>
+		<input type="hidden" name="task" value="` + r.FormValue("task") + `"/>
+		delete
+		</form>
+		</div>`
 	io.WriteString(w, tastList)
 }
 
@@ -212,11 +217,18 @@ func getTODO() string {
 	lineNum1 := 0
 	for fileScanner.Scan() {
 		lineNum1++
-		lineNum = lineNum1
 		// fmt.Println(fileScanner.Text())
-		task += "<div hx-boost=\"true\" class=\"new-element\"> <a href=\"/task/" + strconv.Itoa(
-			lineNum1,
-		) + "\">" + fileScanner.Text() + "</a></div>"
+
+		task += `<div hx-boost="true" class="new-element"> <a href="/task/` + fileScanner.Text() + `">` + fileScanner.Text() +
+			`</a>
+		<form hx-trigger="click" hx-delete="/delete" hx-target="closest .new-element"
+		
+        hx-swap="outerHTML swap:1s"
+		>
+		<input  type="hidden" name="task" value="` + fileScanner.Text() + `"/>
+		delete
+		</form>
+		</div>`
 	}
 	// fmt.Println("New string 2: ", task)
 	readFile.Close()
@@ -224,8 +236,9 @@ func getTODO() string {
 }
 
 func getTaskById(w http.ResponseWriter, r *http.Request) {
+
 	path := r.URL.Path
-	// fmt.Fprintf("Dynamic Value: %s", path)
+	fmt.Println(path)
 	segments := strings.Split(path, "/")
 
 	var result []string
@@ -234,38 +247,22 @@ func getTaskById(w http.ResponseWriter, r *http.Request) {
 			result = append(result, s)
 		}
 	}
-	// fmt.Print(result[1])
+
+	// if len(result) <= 2 && len(result) > 0 {
+	// fmt.Println(len(result))
+	// fmt.Println(result)
+
+	if len(result) > 0 {
+		taskName = result[1]
+		fmt.Println(taskName)
+		io.WriteString(w, "<div>"+result[1]+"</div>")
+	}
+
+	// fmt.Fprintf("Dynamic Value: %s", path)
 
 	// fmt.Print(len(result))
 	// fmt.Fprintf(w, "Dynamic Value: %s \n %s \n %d", path, segments,len(segments))
-	if len(result) == 2 && len(result) > 0 {
-		dynamicValue := result[1] // Assuming the dynamic value is the third segment
-		// Use the dynamicValue as needed
-		// fmt.Fprintf(w, "Dynamic Value: %s", dynamicValue)
-		file, err := os.Open("database.txt")
-		if err != nil {
-			fmt.Println(err)
-		}
-		defer file.Close()
 
-		scanner := bufio.NewScanner(file)
-		currentLine := 0
-
-		for scanner.Scan() {
-			currentLine++
-			lineno, _ := strconv.ParseInt(dynamicValue, 10, 64)
-			if currentLine == int(lineno) {
-				io.WriteString(w, scanner.Text())
-			}
-		}
-
-		if err := scanner.Err(); err != nil {
-		}
-
-	} else {
-		// Handle cases where there are not enough segments or the dynamic value is missing
-		http.NotFound(w, r)
-	}
 }
 func getTaskPage(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
@@ -279,25 +276,52 @@ func getTaskPage(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	// if len(result) <= 2 && len(result) > 0 {
-	fmt.Println(len(result))
-	fmt.Println(result)
+	// fmt.Println(len(result))
+	// fmt.Println(result)
 
 	if len(result) > 0 {
-		// fmt.Print(result[1])
-		fmt.Printf(result[1])
-		lineNum, _ = strconv.Atoi(result[1])
+		fmt.Print(result[1])
+		taskName = result[1]
 
-		fmt.Printf("new value of line %d\n", lineNum)
-
-		http.ServeFile(w, r, "./static/task.html")
-
+		fmt.Println(taskName)
+		io.WriteString(w, `
+	<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <script src="https://unpkg.com/htmx.org@1.9.5"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="http://localhost:3333/style.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="app" class="red">
+      <div>`+taskName+`</div>
+ <form
+          id="myForm2"
+          hx-put="/edit"
+		  hx-target="#app"
+        >
+          <input type="text" name="task" required />
+<input type="hidden" name="old" value="`+result[1]+`"/>
+          <input type="submit" value="edit" />
+        </form>
+    </div>
+  </body>
+</html>
+	`)
 	}
 
 	// getTaskById(w, r)
 }
 
 func setid(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, "<div hx-get=\"/id/"+strconv.Itoa(lineNum)+"\"  hx-trigger=\"load\"></div>")
+	io.WriteString(w, "<div hx-get=\"/id/"+taskName+"\"  hx-trigger=\"load\"></div>")
 }
 
 func CORS(next http.HandlerFunc) http.HandlerFunc {
@@ -402,10 +426,7 @@ func (s *Server) readLoop(ws *websocket.Conn) {
 		// Echo back the received message
 		// broadcast(data.Task)
 		// tastList := "<div hx-boost=\"true\"> <a href=\"/task\">" + data.Task + " </a></div>"
-		lineNum++
-		tastList := "<div hx-swap-oob=\"beforeend:#todo-list\"><div hx-boost=\"true\"> <a href=\"/task/" + strconv.Itoa(
-			lineNum,
-		) + "\">" + data.Task + "</a></div></div>"
+		tastList := `<div hx-swap-oob="beforeend:#todo-list"><div hx-boost="true"> <a href="/task/` + taskName + `">` + data.Task + "</a></div></div>"
 		s.broadcast(tastList)
 		// err = websocket.Message.Send(ws, data.Task)
 		// if err != nil {
@@ -466,7 +487,33 @@ func (s *Server) broadcast(text string) {
 // }
 
 func ani(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, `<div id="list" class="fadein">ssss</div>`)
+	// io.WriteString(w, `<div id="list" class="fadein">ssss</div>`)
+	// io.WriteString(w, `<div id="list"></div>`)
+	io.WriteString(w, ``)
+}
+
+func edit(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm()
+	deleteLineFromFile("database.txt", r.FormValue("old"))
+	storeTODO(r.FormValue("task"))
+	fmt.Println(r.FormValue("task"))
+	fmt.Println(r.FormValue("old"))
+
+	io.WriteString(w, `
+	
+	<div>`+r.FormValue("task")+`</div>
+ <form
+          id="myForm2"
+          hx-put="/edit"
+		  hx-target="#app"
+        >
+          <input type="text" name="task" required />
+<input type="hidden" name="old" value="`+r.FormValue("task")+`"/>
+          <input type="submit" value="edit" />
+        </form>
+    </div>
+	
+	`)
 }
 
 func main() {
@@ -476,13 +523,10 @@ func main() {
 	http.HandleFunc("/", CORS(getRoot))
 	http.HandleFunc("/style.css", CORS(getCSS))
 	http.HandleFunc("/taskList", CORS(listTask))
-	http.HandleFunc("/hello", CORS(getHello))
 	http.HandleFunc("/save", CORS(gets))
 	http.HandleFunc("/delete", (removeTask))
 	http.HandleFunc("/task/", CORS(getTaskPage))
-	http.HandleFunc("/id/", CORS(getTaskById))
-	http.HandleFunc("/ids", CORS(setid))
-	http.HandleFunc("/ani", CORS(ani))
+	http.HandleFunc("/edit", CORS(edit))
 
 	http.Handle("/ws", websocket.Handler(server.websocketHandler))
 	http.ListenAndServe(":3333", nil)
